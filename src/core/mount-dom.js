@@ -30,9 +30,9 @@ function createTextNode(vdom, parentEl) {
 }
 
 function createFragmentNodes(vdom, parentEl) {
-    const { childrens } = vdom
+    const { children } = vdom
     vdom.el = parentEl;
-    childrens.forEach(child => mountDOM(child, parentEl));
+    children.forEach(child => mountDOM(child, parentEl));
 }
 
 function createElementNode(vdom, parentEl) {

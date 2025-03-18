@@ -1,4 +1,4 @@
-import { cleanArray } from '../utils/helpers';
+import { cleanArray } from '../utils/arrays.js';
 
 export const DOM_TYPES = {
     TEXT: 'text',
