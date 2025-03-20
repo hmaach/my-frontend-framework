@@ -6,15 +6,15 @@ export class DOMDestroyer {
         const { type } = vdom;
         switch (type) {
             case DOM_TYPES.TEXT: {
-                this.removeTextNode(vdom);
+                DOMDestroyer.removeTextNode(vdom);
                 break;
             }
             case DOM_TYPES.ELEMENT: {
-                this.removeElementNode(vdom);
+                DOMDestroyer.removeElementNode(vdom);
                 break;
             }
             case DOM_TYPES.FRAGMENT: {
-                this.removeFragmentNodes(vdom);
+                DOMDestroyer.removeFragmentNodes(vdom);
                 break;
             }
             default: {
@@ -32,7 +32,7 @@ export class DOMDestroyer {
     static removeElementNode(vdom) {
         const { el, children, listeners } = vdom
         el.remove()
-        children.forEach(this.destroyDOM)
+        children.forEach(DOMDestroyer.destroyDOM)
         if (listeners) {
             removeEventListeners(listeners, el)
             delete vdom.listeners
@@ -41,7 +41,7 @@ export class DOMDestroyer {
 
     static removeFragmentNodes(vdom) {
         const { children } = vdom
-        children.forEach(this.destroyDOM)
+        children.forEach(DOMDestroyer.destroyDOM)
     }
 }
 
