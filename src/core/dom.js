@@ -6,43 +6,47 @@ export const DOM_TYPES = {
   FRAGMENT: "fragment",
 };
 
-export function h(tag, props = {}, children = []) {
-  return {
-    tag,
-    props,
-    children: mapTextNodes(cleanArray(children)),
-    type: DOM_TYPES.ELEMENT,
-  };
-}
-
-function mapTextNodes(children) {
-  return children.map((child) =>
-    typeof child === "string" ? hString(child) : child
-  );
-}
-
-export function hString(str) {
-  return { type: DOM_TYPES.TEXT, value: str };
-}
-
-export function hFragment(vNodes) {
-  return {
-    type: DOM_TYPES.FRAGMENT,
-    children: mapTextNodes(cleanArray(vNodes)),
-  };
-}
-
-export function extractChildren(vdom) {
-  if (vdom.children == null) {
-    return [];
+export class DOM {
+  static h(tag, props = {}, children = []) {
+    return {
+      tag,
+      props,
+      children: DOM.mapTextNodes(cleanArray(children)),
+      type: DOM_TYPES.ELEMENT,
+    };
   }
-  const children = [];
-  for (const child of vdom.children) {
-    if (child.type === DOM_TYPES.FRAGMENT) {
-      children.push(...extractChildren(child, children));
-    } else {
-      children.push(child);
+
+  static mapTextNodes(children) {
+    return children.map((child) =>
+      typeof child === "string" ? DOM.hString(child) : child
+    );
+  }
+
+  static hString(str) {
+    return { type: DOM_TYPES.TEXT, value: str };
+  }
+
+  static hFragment(vNodes) {
+    return {
+      type: DOM_TYPES.FRAGMENT,
+      children: DOM.mapTextNodes(cleanArray(vNodes)),
+    };
+  }
+
+  static extractChildren(vdom) {
+    if (vdom.children == null) {
+      return [];
     }
+    const children = [];
+    for (const child of vdom.children) {
+      if (child.type === DOM_TYPES.FRAGMENT) {
+        children.push(...DOM.extractChildren(child, children));
+      } else {
+        children.push(child);
+      }
+    }
+    return children;
   }
-  return children;
 }
+
+export const { h, hString, hFragment, extractChildren } = DOM;
