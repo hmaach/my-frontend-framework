@@ -66,12 +66,7 @@ export class DOMMount {
     static addProps(el, props, vdom) {
         const { on: events, ...attrs } = props;
         if (events) {
-            const normalizedEvents = {};
-            Object.entries(events).forEach(([eventName, handler]) => {
-                const normalizedName = eventName.toLowerCase().replace(/^on/, '');
-                normalizedEvents[normalizedName] = handler;
-            });
-            vdom.listeners = addEventListeners(normalizedEvents, el);
+            addEventListeners(events, el);
         }
         setAttributes(el, attrs);
     }

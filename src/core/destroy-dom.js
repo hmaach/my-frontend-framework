@@ -30,11 +30,11 @@ export class DOMDestroyer {
     }
 
     static removeElementNode(vdom) {
-        const { el, children, listeners } = vdom
+        const { el, children, listeners, props } = vdom
         el.remove()
         children.forEach(DOMDestroyer.destroyDOM)
-        if (listeners) {
-            removeEventListeners(listeners, el)
+        if (props && props.on) {
+            removeEventListeners(props.on, el)
             delete vdom.listeners
         }
     }
