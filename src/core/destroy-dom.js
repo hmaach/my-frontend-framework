@@ -1,4 +1,4 @@
-import { removeEventListeners } from './events.js'
+import { removeEvListeners } from './events.js'
 import { DOM_TYPES } from './dom.js'
 
 export class DOMDestroyer {
@@ -34,7 +34,7 @@ export class DOMDestroyer {
         el.remove()
         children.forEach(DOMDestroyer.destroyDOM)
         if (props && props.on) {
-            removeEventListeners(props.on, el)
+            removeEvListeners(props.on, el)
             delete vdom.listeners
         }
     }

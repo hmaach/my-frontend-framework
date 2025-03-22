@@ -1,6 +1,6 @@
 import { DOM_TYPES } from "./dom.js";
 import { setAttributes } from "./attributes.js";
-import { addEventListeners } from "./events.js";
+import { addEvListeners } from "./events.js";
 
 export class DOMMount {
     static mountDOM(vdom, parentEl, index) {
@@ -66,7 +66,7 @@ export class DOMMount {
     static addProps(el, props, vdom) {
         const { on: events, ...attrs } = props;
         if (events) {
-            addEventListeners(events, el);
+            addEvListeners(events, el);
         }
         setAttributes(el, attrs);
     }

@@ -14,7 +14,7 @@ import {
   ARRAY_DIFF_OP,
 } from "../utils/arrays.js";
 import { isNotBlankOrEmptyString } from "../utils/strings.js";
-import { addEventListener } from "./events.js";
+import { addEvListener } from "./events.js";
 import { DOM_TYPES, extractChildren } from "./dom.js";
 
 export class DOMPatcher {
@@ -124,7 +124,7 @@ export class DOMPatcher {
     }
     const addedListeners = {};
     for (const eventName of added.concat(updated)) {
-      const listener = addEventListener(eventName, newEvents[eventName], el);
+      const listener = addEvListener(eventName, newEvents[eventName], el);
       addedListeners[eventName] = listener;
     }
     return addedListeners;
