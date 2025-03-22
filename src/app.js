@@ -1,8 +1,10 @@
 import { createApp } from "./core/app.js";
 import { h, hString, hFragment } from "./core/dom.js";
+import { createRouter } from "./core/router.js";
 
 const state = {
   currentTodo: "",
+  filter: "all",
   edit: {
     idx: null,
     original: null,
@@ -80,10 +82,21 @@ const reducers = {
     ...state,
     todos: state.todos.filter(todo => !todo.completed)
   }),
+  "set-filter": (state, filter) => ({
+    ...state,
+    filter
+  }),
 };
 
 function App(state, emit) {
   const hasTodos = state.todos.length > 0;
+  const filteredTodos = state.todos
+    .map((todo, index) => ({ ...todo, index }))  // Add original index
+    .filter(todo => {
+      if (state.filter === 'active') return !todo.completed;
+      if (state.filter === 'completed') return todo.completed;
+      return true;
+    });
   const activeCount = state.todos.filter(todo => !todo.completed).length;
   const completedCount = state.todos.length - activeCount;
   const areAllCompleted = state.todos.length > 0 && activeCount === 0;
@@ -113,7 +126,7 @@ function App(state, emit) {
             "Toggle All Input",
           ]),
         ]),
-        TodoList(state, emit),
+        TodoList({ todos: filteredTodos, edit: state.edit, filter: state.filter }, emit),
       ]),
       hasTodos
         ? h("footer", { class: "footer", "data-testid": "footer" }, [
@@ -121,12 +134,23 @@ function App(state, emit) {
               `${activeCount} ${activeCount === 1 ? 'item' : 'items'} left!`
             ]),
             h("ul", { class: "filters", "data-testid": "footer-navigation" }, [
-              h("li", {}, [h("a", { class: "selected", href: "#/" }, ["All"])]),
               h("li", {}, [
-                h("a", { class: "", href: "#/active" }, ["Active"]),
+                h("a", { 
+                  class: state.filter === 'all' ? "selected" : "", 
+                  href: "#/" 
+                }, ["All"])
               ]),
               h("li", {}, [
-                h("a", { class: "", href: "#/completed" }, ["Completed"]),
+                h("a", { 
+                  class: state.filter === 'active' ? "selected" : "", 
+                  href: "#/active" 
+                }, ["Active"]),
+              ]),
+              h("li", {}, [
+                h("a", { 
+                  class: state.filter === 'completed' ? "selected" : "", 
+                  href: "#/completed" 
+                }, ["Completed"]),
               ]),
             ]),
             h("button", { 
@@ -176,11 +200,15 @@ function CreateTodo({ currentTodo }, emit) {
   ]);
 }
 
-function TodoList({ todos, edit }, emit) {
+function TodoList({ todos, edit, filter }, emit) {
   return h(
     "ul",
     { class: "todo-list", "data-testid": "todo-list" },
-    todos.map((todo, i) => TodoItem({ todo, i, edit }, emit))
+    todos.map(todo => TodoItem({ 
+      todo: todo, 
+      i: todo.index,  // Pass original index
+      edit 
+    }, emit))
   );
 }
 
@@ -189,7 +217,10 @@ function TodoItem({ todo, i, edit }, emit) {
 
   return h(
     "li",
-    { class: `${todo.completed ? "completed" : ""} ${isEditing ? "editing" : ""}`, "data-testid": "todo-item" },
+    { 
+      class: `${todo.completed ? "completed" : ""} ${isEditing ? "editing" : ""}`,
+      "data-testid": "todo-item" 
+    },
     [
       isEditing ? 
         h("input", {
@@ -214,7 +245,7 @@ function TodoItem({ todo, i, edit }, emit) {
             "data-testid": "todo-item-toggle",
             checked: todo.completed,
             on: {
-              click: () => emit("toggle-todo", i),
+              click: () => emit("toggle-todo", i)  // Using original index
             },
           }),
           h(
@@ -239,4 +270,6 @@ function TodoItem({ todo, i, edit }, emit) {
   );
 }
 
-createApp({ state, reducers, view: App }).mount(document.body);
+const app = createApp({ state, reducers, view: App });
+const router = createRouter(app);
+app.mount(document.body);

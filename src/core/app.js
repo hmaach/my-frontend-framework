@@ -3,50 +3,47 @@ import { Dispatcher } from "./dispatcher.js";
 import { patchDOM } from "./patch-dom.js";
 import { mountDOM } from "./mount-dom.js";
 
-export class App {
-    static createApp({ state, view, reducers = {} }) {
-        let parentEl = null;
-        let vdom = null;
-        let isMounted = false;
-
-        const dispatcher = new Dispatcher();
-        const subscriptions = [dispatcher.afterEveryCommand(renderApp)];
-
-        function emit(eventName, payload) {
-            dispatcher.dispatch(eventName, payload);
-        }
-
-        for (const actionName in reducers) {
-            const reducer = reducers[actionName];
-            const subs = dispatcher.subscribe(actionName, (payload) => {
-                state = reducer(state, payload);
-            });
-            subscriptions.push(subs);
-        }
-
-        function renderApp() {
-            const newVdom = view(state, emit);
-            vdom = patchDOM(vdom, newVdom, parentEl);
-        }
-
-        return {
-            mount(_parentEl) {
-                if (isMounted) {
-                    throw new Error("The application is already mounted");
-                }
-                parentEl = _parentEl;
-                vdom = view(state, emit);
-                mountDOM(vdom, parentEl);
-                isMounted = true;
-            },
-            unmount() {
-                destroyDOM(vdom);
-                vdom = null;
-                subscriptions.forEach((unsubscribe) => unsubscribe());
-                isMounted = false;
-            },
-        };
+export function createApp({ state, reducers, view }) {
+  let currentState = state;
+  let rootElement = null;
+  let oldTree = null;
+  
+  function emit(action, payload) {
+    const reducer = reducers[action];
+    if (reducer) {
+      currentState = reducer(currentState, payload);
+      render();
     }
-}
+  }
 
-export const { createApp } = App;
+  function render() {
+    const newTree = view(currentState, emit);
+    
+    if (!rootElement) {
+      return;
+    }
+
+    if (!oldTree) {
+      mountDOM(newTree, rootElement);
+    } else {
+      patchDOM(oldTree, newTree, rootElement);
+    }
+    
+    oldTree = newTree;
+  }
+
+  return {
+    emit,
+    mount(element) {
+      rootElement = element;
+      render();
+    },
+    unmount() {
+      if (oldTree) {
+        destroyDOM(oldTree);
+      }
+      rootTree = null;
+      oldTree = null;
+    }
+  };
+}
