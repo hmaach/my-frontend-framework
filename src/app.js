@@ -21,14 +21,21 @@ const reducers = {
     currentTodo: "",
     todos: [...state.todos, { text: state.currentTodo, completed: false }],
   }),
-  "start-editing-todo": (state, idx) => ({
-    ...state,
-    edit: {
-      idx,
-      original: state.todos[idx].text,
-      edited: state.todos[idx].text,
-    },
-  }),
+  "start-editing-todo": (state, idx) => {
+    setTimeout(() => {
+      const input = document.querySelector('[data-testid="todo-item-edit-input"]');
+      if (input) input.focus();
+    }, 0);
+    
+    return {
+      ...state,
+      edit: {
+        idx,
+        original: state.todos[idx].text,
+        edited: state.todos[idx].text,
+      },
+    };
+  },
   "edit-todo": (state, edited) => ({
     ...state,
     edit: { ...state.edit, edited },
@@ -184,18 +191,9 @@ function TodoItem({ todo, i, edit }, emit) {
     "li",
     { class: `${todo.completed ? "completed" : ""} ${isEditing ? "editing" : ""}`, "data-testid": "todo-item" },
     [
-      h("div", { class: "view" }, [
+      isEditing ? 
         h("input", {
-          class: "toggle",
-          type: "checkbox",
-          "data-testid": "todo-item-toggle",
-          checked: todo.completed,
-          on: {
-            click: () => emit("toggle-todo", i),
-          },
-        }),
-        isEditing ? h("input", {
-          class: "edit",
+          class: "new-todo",
           type: "text",
           "data-testid": "todo-item-edit-input",
           value: edit.edited,
@@ -206,25 +204,37 @@ function TodoItem({ todo, i, edit }, emit) {
                 emit("save-edited-todo");
               }
             },
+            blur: () => emit("cancel-editing-todo"),
           },
-        }) : h(
-          "label",
-          {
-            "data-testid": "todo-item-label",
+        })
+      : h("div", { class: "view" }, [
+          h("input", {
+            class: "toggle",
+            type: "checkbox",
+            "data-testid": "todo-item-toggle",
+            checked: todo.completed,
             on: {
-              dblclick: () => emit("start-editing-todo", i),
+              click: () => emit("toggle-todo", i),
             },
-          },
-          [todo.text]
-        ),
-        h("button", { 
-          class: "destroy", 
-          "data-testid": "todo-item-button",
-          on: {
-            click: () => emit("remove-todo", i)
-          }
-        }),
-      ]),
+          }),
+          h(
+            "label",
+            {
+              "data-testid": "todo-item-label",
+              on: {
+                dblclick: () => emit("start-editing-todo", i),
+              },
+            },
+            [todo.text]
+          ),
+          h("button", { 
+            class: "destroy", 
+            "data-testid": "todo-item-button",
+            on: {
+              click: () => emit("remove-todo", i)
+            }
+          }),
+        ]),
     ]
   );
 }
