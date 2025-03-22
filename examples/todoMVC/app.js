@@ -1,149 +1,65 @@
 import { createApp } from "../../src/core/app.js";
-import { h, hFragment, hString } from "../../src/core/dom.js";
-
-const state = {
-  currentTodo: "",
-  edit: {
-    idx: null,
-    original: null,
-    edited: null,
-  },
-  todos: [],
-};
-
-const reducers = {
-  "update-current-todo": (state, currentTodo) => ({
-    ...state,
-    currentTodo,
-  }),
-  "add-todo": (state) => ({
-    ...state,
-    currentTodo: "",
-    todos: [...state.todos, state.currentTodo],
-  }),
-  "start-editing-todo": (state, idx) => ({
-    ...state,
-    edit: {
-      idx,
-      original: state.todos[idx],
-      edited: state.todos[idx],
-    },
-  }),
-  "edit-todo": (state, edited) => ({
-    ...state,
-    edit: { ...state.edit, edited },
-  }),
-  "save-edited-todo": (state) => {
-    const todos = [...state.todos];
-    todos[state.edit.idx] = state.edit.edited;
-    return {
-      ...state,
-      edit: { idx: null, original: null, edited: null },
-      todos,
-    };
-  },
-  "cancel-editing-todo": (state) => ({
-    ...state,
-    edit: { idx: null, original: null, edited: null },
-  }),
-  "remove-todo": (state, idx) => ({
-    ...state,
-    todos: state.todos.filter((_, i) => i !== idx),
-  }),
-};
+import { h, hFragment } from "../../src/core/dom.js";
+import { createRouter } from "../../src/core/router.js";
+import { state, reducers } from "./store/store.js";
+import { Header } from "./components/Header.js";
+import { TodoList } from "./components/TodoList.js";
+import { Footer } from "./components/Footer.js";
 
 function App(state, emit) {
+  const hasTodos = state.todos.length > 0;
+  const filteredTodos = state.todos
+    .map((todo, index) => ({ ...todo, index }))
+    .filter(todo => {
+      if (state.filter === 'active') return !todo.completed;
+      if (state.filter === 'completed') return todo.completed;
+      return true;
+    });
+  const activeCount = state.todos.filter(todo => !todo.completed).length;
+  const completedCount = state.todos.length - activeCount;
+  const areAllCompleted = state.todos.length > 0 && activeCount === 0;
+
   return hFragment([
-    h("h1", {}, ["My TODOs"]),
-    CreateTodo(state, emit),
-    TodoList(state, emit),
+    h("section", { class: "todoapp", id: "root" }, [
+      Header(state, emit),
+      h("main", { class: "main", "data-testid": "main" }, [
+        h("div", { class: "toggle-all-container" }, [
+          h("input", {
+            class: "toggle-all",
+            type: "checkbox",
+            id: "toggle-all",
+            checked: areAllCompleted,
+            "data-testid": "toggle-all",
+          }),
+          h("label", { 
+            class: "toggle-all-label", 
+            for: "toggle-all",
+            on: {
+              click: () => emit("toggle-all-todos")
+            }
+          }, [
+            "Toggle All Input",
+          ]),
+        ]),
+        TodoList({ todos: filteredTodos, edit: state.edit, filter: state.filter }, emit),
+      ]),
+      hasTodos ? Footer({ 
+        activeCount, 
+        completedCount, 
+        filter: state.filter 
+      }, emit) : null,
+    ]),
+    h("footer", { class: "info" }, [
+      h("p", {}, ["Double-click to edit a todo"]),
+      h("p", {}, ["Created by the TodoMVC Team"]),
+      h("p", {}, [
+        "Part of ",
+        h("a", { href: "http://todomvc.com" }, ["TodoMVC"]),
+      ]),
+    ]),
   ]);
 }
 
-function CreateTodo({ currentTodo }, emit) {
-  return h("div", {}, [
-    h("label", { for: "todo-input" }, ["New TODO"]),
-    h("input", {
-      type: "text",
-      id: "todo-input",
-      value: currentTodo,
-      on: {
-        input: ({ target }) => emit("update-current-todo", target.value),
-        keydown: ({ key }) => {
-          if (key === "Enter" && currentTodo.length >= 2) {
-            emit("add-todo");
-          }
-        },
-      },
-    }),
-    h(
-      "button",
-      {
-        disabled: currentTodo.length < 2,
-        on: { click: () => emit("add-todo") },
-      },
-      ["Add"]
-    ),
-  ]);
-}
-
-function TodoList({ todos, edit }, emit) {
-  return h(
-    "ul",
-    {},
-    todos.map((todo, i) => TodoItem({ todo, i, edit }, emit))
-  );
-}
-
-function TodoItem({ todo, i, edit }, emit) {
-  const isEditing = edit.idx === i;
-  return isEditing
-    ? h("li", {}, [
-        h("input", {
-          value: edit.edited,
-          on: {
-            input: ({ target }) => emit("edit-todo", target.value),
-          },
-        }),
-        h(
-          "button",
-          {
-            on: {
-              click: () => emit("save-edited-todo"),
-            },
-          },
-          ["Save"]
-        ),
-        h(
-          "button",
-          {
-            on: {
-              click: () => emit("cancel-editing-todo"),
-            },
-          },
-          ["Cancel"]
-        ),
-      ])
-    : h("li", {}, [
-        h(
-          "span",
-          {
-            on: {
-              dblclick: () => emit("start-editing-todo", i),
-            },
-          },
-          [todo]
-        ),
-        h(
-          "button",
-          {
-            on: {
-              click: () => emit("remove-todo", i),
-            },
-          },
-          ["Done"]
-        ),
-      ]);
-}
-
-createApp({ state, reducers, view: App }).mount(document.body);
+const app = createApp({ state, reducers, view: App });
+createRouter(app);
+app.mount(document.body);
