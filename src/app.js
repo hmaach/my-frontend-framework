@@ -58,11 +58,28 @@ const reducers = {
       todos,
     };
   },
+  "toggle-all-todos": (state) => {
+    const areAllCompleted = state.todos.every(todo => todo.completed);
+    const todos = state.todos.map(todo => ({
+      ...todo,
+      completed: !areAllCompleted
+    }));
+    return {
+      ...state,
+      todos
+    };
+  },
+  "clear-completed": (state) => ({
+    ...state,
+    todos: state.todos.filter(todo => !todo.completed)
+  }),
 };
 
 function App(state, emit) {
   const hasTodos = state.todos.length > 0;
   const activeCount = state.todos.filter(todo => !todo.completed).length;
+  const completedCount = state.todos.length - activeCount;
+  const areAllCompleted = state.todos.length > 0 && activeCount === 0;
 
   return hFragment([
     h("section", { class: "todoapp", id: "root" }, [
@@ -76,9 +93,16 @@ function App(state, emit) {
             class: "toggle-all",
             type: "checkbox",
             id: "toggle-all",
+            checked: areAllCompleted,
             "data-testid": "toggle-all",
           }),
-          h("label", { class: "toggle-all-label", for: "toggle-all" }, [
+          h("label", { 
+            class: "toggle-all-label", 
+            for: "toggle-all",
+            on: {
+              click: () => emit("toggle-all-todos")
+            }
+          }, [
             "Toggle All Input",
           ]),
         ]),
@@ -98,8 +122,14 @@ function App(state, emit) {
                 h("a", { class: "", href: "#/completed" }, ["Completed"]),
               ]),
             ]),
-            h("button", { class: "clear-completed", disabled: "" }, [
-              "Clear completed",
+            h("button", { 
+              class: "clear-completed", 
+              disabled: completedCount === 0,
+              on: {
+                click: () => emit("clear-completed")
+              }
+            }, [
+              "Clear completed"
             ]),
           ])
         : null,
@@ -174,8 +204,6 @@ function TodoItem({ todo, i, edit }, emit) {
             keydown: ({ key }) => {
               if (key === "Enter" && edit.edited.length >= 2) {
                 emit("save-edited-todo");
-              } else if (key === "Escape") {
-                emit("cancel-editing-todo");
               }
             },
           },
