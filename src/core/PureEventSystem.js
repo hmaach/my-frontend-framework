@@ -10,96 +10,147 @@ class PureEventSystem {
     
     EventTarget.prototype.dispatchEvent = function(event) {
       PureEventSystem.processEvent(event, this);
-      
       return originalDispatchEvent.call(this, event);
     };
     
-    const originalDocumentClick = document.onclick;
-    document.onclick = (event) => {
-      if (originalDocumentClick) originalDocumentClick.call(document, event);
-      this.triggerHandlers('click', event);
+    const globalEvents = {
+      document: ['click', 'dblclick', 'keydown', 'keyup', 'mousedown', 'mouseup', 'contextmenu'],
+      window: ['scroll', 'resize', 'mousemove', 'blur', 'focus', 'popstate']
     };
     
-    const originalDocumentDblClick = document.ondblclick;
-    document.ondblclick = (event) => {
-      if (originalDocumentDblClick) originalDocumentDblClick.call(document, event);
-      this.triggerHandlers("dblclick", event);
-    };
-
-    const originalWindowScroll = window.onscroll;
-    window.onscroll = (event) => {
-      if (originalWindowScroll) originalWindowScroll.call(window, event);
-      this.triggerHandlers('scroll', event);
-    };
+    globalEvents.document.forEach(eventType => {
+      const originalHandler = document[`on${eventType}`];
+      document[`on${eventType}`] = (event) => {
+        if (originalHandler) originalHandler.call(document, event);
+        this.triggerHandlers(eventType, event);
+      };
+    });
     
-    const originalDocumentKeydown = document.onkeydown;
-    document.onkeydown = (event) => {
-      if (originalDocumentKeydown) originalDocumentKeydown.call(document, event);
-      this.triggerHandlers('keydown', event);
-    };
-    
-    const originalWindowMousemove = window.onmousemove;
-    window.onmousemove = (event) => {
-      if (originalWindowMousemove) originalWindowMousemove.call(window, event);
-      this.triggerHandlers('mousemove', event);
-    };
+    globalEvents.window.forEach(eventType => {
+      const originalHandler = window[`on${eventType}`];
+      window[`on${eventType}`] = (event) => {
+        if (originalHandler) originalHandler.call(window, event);
+        this.triggerHandlers(eventType, event);
+      };
+    });
     
     this.observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-          for (const node of mutation.addedNodes) {
+          mutation.addedNodes.forEach(node => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-              this.attachEventPropertiesToElement(node);
-              node.querySelectorAll('*').forEach(child => {
-                this.attachEventPropertiesToElement(child);
-              });
+              this.processNewElement(node);
             }
-          }
+          });
+        } else if (mutation.type === 'attributes' && mutation.attributeName.startsWith('on')) {
+          this.updateElementEventHandler(mutation.target, mutation.attributeName);
         }
       }
     });
     
     this.observer.observe(document.documentElement, {
       childList: true,
-      subtree: true
+      subtree: true,
+      attributes: true,
+      attributeFilter: [/^on.+/]
     });
     
-    document.querySelectorAll('*').forEach(el => {
-      this.attachEventPropertiesToElement(el);
+    this.processAllExistingElements();
+  }
+
+  processNewElement(element) {
+    this.attachEventPropertiesToElement(element);
+    
+    if (element.children && element.children.length) {
+      Array.from(element.children).forEach(child => {
+        this.processNewElement(child);
+      });
+    }
+    
+    const newElementEvent = new CustomEvent('element:added', { 
+      detail: { element },
+      bubbles: true
+    });
+    element.dispatchEvent(newElementEvent);
+  }
+
+  processAllExistingElements() {
+    document.querySelectorAll('*').forEach(element => {
+      this.attachEventPropertiesToElement(element);
     });
   }
-  
-  attachEventPropertiesToElement(element) {
-    const eventTypes = ['click', 'mouseover', 'mouseout', 'keydown', 'keyup', 'input', 'change', 'focus', 'blur'];
+
+  updateElementEventHandler(element, attributeName) {
+    const eventType = attributeName.slice(2);
+    const handlerValue = element.getAttribute(attributeName);
     
-    eventTypes.forEach(type => {
-      const propName = `on${type}`;
-      const originalHandler = element[propName];
+    if (handlerValue) {
+      try {
+        const handlerFn = new Function('event', handlerValue);
+        PureEventSystem.registerHandler(element, eventType, handlerFn);
+      } catch (e) {
+        console.warn(`Failed to parse handler for ${attributeName}:`, e);
+      }
+    } else {
+      PureEventSystem.unregisterHandler(element, eventType);
+    }
+  }
+
+  attachEventPropertiesToElement(element) {
+    const elementEvents = [
+      'click', 'dblclick', 'mouseenter', 'mouseleave', 
+      'focus', 'blur', 'input', 'change', 'submit'
+    ];
+    
+    elementEvents.forEach(eventType => {
+      const handlerPropertyName = `on${eventType}`;
+      const originalHandler = element[handlerPropertyName];
       
-      Object.defineProperty(element, propName, {
+      Object.defineProperty(element, handlerPropertyName, {
         get: function() {
-          return this[`_${propName}`] || null;
+          return this._pureEventHandlers?.[eventType] || null;
         },
         set: function(newHandler) {
-          this[`_${propName}`] = newHandler;
+          if (!this._pureEventHandlers) this._pureEventHandlers = {};
+          this._pureEventHandlers[eventType] = newHandler;
           
-          const wrappedHandler = (event) => {
-            if (this[`_${propName}`]) {
-              this[`_${propName}`].call(this, event);
-            }
-          };
-          
-          element[`_wrapped_${propName}`] = wrappedHandler;
+          if (newHandler) {
+            PureEventSystem.registerHandler(this, eventType, newHandler);
+          } else {
+            PureEventSystem.unregisterHandler(this, eventType);
+          }
         },
         configurable: true
       });
       
       if (originalHandler) {
-        element[propName] = originalHandler;
+        element[handlerPropertyName] = originalHandler;
+      }
+      
+      const attrHandler = element.getAttribute(handlerPropertyName);
+      if (attrHandler && !originalHandler) {
+        try {
+          element[handlerPropertyName] = new Function('event', attrHandler);
+        } catch (e) {
+          console.warn(`Failed to parse handler for ${handlerPropertyName}:`, e);
+        }
       }
     });
   }
-  
+
+  static registerHandler(element, eventType, handler) {
+    if (!element._pureEventHandlers) {
+      element._pureEventHandlers = {};
+    }
+    element._pureEventHandlers[eventType] = handler;
+  }
+
+  static unregisterHandler(element, eventType) {
+    if (element._pureEventHandlers) {
+      delete element._pureEventHandlers[eventType];
+    }
+  }
+
   static processEvent(event, target) {
     if (window.pureEventSystem) {
       window.pureEventSystem.triggerHandlers(event.type, event);

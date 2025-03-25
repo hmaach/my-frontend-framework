@@ -2,6 +2,23 @@ import { h } from "../../../src/core/dom.js";
 
 export function TodoItem({ todo, i, edit }, emit) {
   const isEditing = edit.idx === i;
+  let isProcessingEdit = false;
+
+  const handleKeydown = (event) => {
+    if (event.key === "Enter" && edit.edited.length >= 2) {
+      isProcessingEdit = true;
+      emit("save-edited-todo");
+    } else if (event.key === "Escape") {
+      isProcessingEdit = true;
+      emit("cancel-editing-todo");
+    }
+  };
+
+  const handleBlur = () => {
+    if (!isProcessingEdit) {
+      emit("cancel-editing-todo");
+    }
+  };
 
   return h(
     "li",
@@ -18,12 +35,8 @@ export function TodoItem({ todo, i, edit }, emit) {
           value: edit.edited,
           on: {
             input: ({ target }) => emit("edit-todo", target.value),
-            keydown: ({ key }) => {
-              if (key === "Enter" && edit.edited.length >= 2) {
-                emit("save-edited-todo");
-              }
-            },
-            blur: () => emit("cancel-editing-todo"),
+            keydown: handleKeydown,
+            blur: handleBlur,
           },
         })
       : h("div", { class: "view" }, [
