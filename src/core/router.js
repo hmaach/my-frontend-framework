@@ -1,24 +1,21 @@
-export function createRouter(app) {
-  if (!app || typeof app.emit !== 'function') {
-    throw new Error('Router requires an app instance with an emit function');
-  }
+import { addEvListener, removeEvListeners } from "./events.js";
 
-  const routes = {
-    '#/': () => app.emit('set-filter', 'all'),
-    '#/active': () => app.emit('set-filter', 'active'),
-    '#/completed': () => app.emit('set-filter', 'completed')
-  };
+export function createRouter(app, routes = {}) {
+  if (!app || typeof app.emit !== "function") {
+    throw new Error("Router requires an app instance with an emit function");
+  }
 
   function handleRoute() {
-    const hash = window.location.hash || '#/';
+    const hash = window.location.hash || "#/";
     const route = routes[hash];
-    if (route) route();
+    if (route) route(app);
   }
 
-  window.addEventListener('hashchange', handleRoute);
+  const handler = addEvListener("popstate", handleRoute, window);
+
   handleRoute();
 
   return {
-    destroy: () => window.removeEventListener('hashchange', handleRoute)
+    destroy: () => removeEvListeners({ popstate: handler }, window),
   };
 }

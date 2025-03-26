@@ -5,6 +5,7 @@ import { state, reducers } from "./store/store.js";
 import { Header } from "./components/Header.js";
 import { TodoList } from "./components/TodoList.js";
 import { Footer } from "./components/Footer.js";
+import { routes } from './routes/routes.js';
 
 function App(state, emit) {
   const hasTodos = state.todos.length > 0;
@@ -61,5 +62,5 @@ function App(state, emit) {
 }
 
 const app = createApp({ state, reducers, view: App });
-createRouter(app);
+createRouter(app, routes);
 app.mount(document.body);
