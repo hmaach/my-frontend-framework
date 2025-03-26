@@ -8,9 +8,6 @@ export function TodoItem({ todo, i, edit }, emit) {
     if (event.key === "Enter" && edit.edited.length >= 2) {
       isProcessingEdit = true;
       emit("save-edited-todo");
-    } else if (event.key === "Escape") {
-      isProcessingEdit = true;
-      emit("cancel-editing-todo");
     }
   };
 
