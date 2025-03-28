@@ -1,112 +1,141 @@
 # Mini-Framework Examples
 
-## Basic Usage
+## Creating Elements
 
-### Creating Elements
+### Basic Elements
+
 ```javascript
-import { h, mountDOM } from 'mini-framework';
+import { h } from './core/dom.js';
 
-// Create a simple element
-const element = h('div', { class: 'container' }, [
-    h('h1', {}, ['Hello World'])
+// Create a div
+const div = h('div', { class: 'container' }, [
+  'Hello World'
 ]);
 
-// Mount to DOM
-mountDOM(element, document.getElementById('app'));
+// Create a button
+const button = h('button', { class: 'btn' }, [
+  'Click me'
+]);
+```
+
+### Adding Attributes
+
+```javascript
+// Element with multiple attributes
+const input = h('input', {
+  type: 'text',
+  class: 'form-input',
+  placeholder: 'Enter your name',
+  value: 'John'
+});
+
+// Using data attributes
+const card = h('div', {
+  class: 'card',
+  'data-id': '123',
+  'aria-label': 'User card'
+});
 ```
 
 ### Event Handling
-```javascript
-// Method 1: Using PureEventSystem
-const button = h('button', {}, ['Click me']);
-window.pureEventSystem.onClick(button, (e) => {
-    console.log('Button clicked!');
-});
 
-// Method 2: Using props
+```javascript
+// Button with click handler
 const button = h('button', {
-    onClick: (e) => console.log('Clicked!'),
-    onMouseover: (e) => console.log('Mouse over')
-}, ['Click me']);
+  on: {
+    click: (e) => {
+      console.log('Button clicked!');
+    }
+  }
+}, ['Click Me']);
+
+// Form with multiple events
+const form = h('form', {
+  on: {
+    submit: (e) => e.preventDefault(),
+    change: (e) => console.log('Form changed')
+  }
+});
 ```
 
-### Creating an Application
+### Nesting Elements
+
 ```javascript
-import { createApp } from 'mini-framework';
-
-// Define initial state
-const state = {
-    count: 0
-};
-
-// Define reducers
-const reducers = {
-    'increment': (state) => ({ ...state, count: state.count + 1 }),
-    'decrement': (state) => ({ ...state, count: state.count - 1 })
-};
-
-// Create view
-const view = (state, emit) => h('div', {}, [
-    h('button', { onClick: () => emit('decrement') }, ['-']),
-    h('span', {}, [state.count.toString()]),
-    h('button', { onClick: () => emit('increment') }, ['+'])
-]);
-
-// Create and mount app
-const app = createApp({ state, reducers, view });
-app.mount(document.getElementById('app'));
-```
-
-### Using the Router
-```javascript
-import { createRouter } from 'mini-framework';
-
-const app = createApp({...});
-
-const router = createRouter(app);
-
-// Routes are automatically handled based on hash changes
-// #/ -> defaults to home
-// #/active -> active route
-// #/completed -> completed route
-```
-
-### Element Attributes and Styling
-```javascript
-const element = h('div', {
-    class: ['container', 'main'],
-    style: {
-        backgroundColor: 'blue',
-        fontSize: '16px'
-    },
-    id: 'main-container',
-    'data-test': 'test-value'
-}, [
-    // Children
+// Complex nested structure
+const card = h('div', { class: 'card' }, [
+  h('div', { class: 'card-header' }, [
+    h('h2', {}, ['Title']),
+    h('button', { class: 'close-btn' }, ['×'])
+  ]),
+  h('div', { class: 'card-body' }, [
+    h('p', {}, ['Content goes here']),
+    h('button', { class: 'btn' }, ['Action'])
+  ])
 ]);
 ```
 
-## Advanced Patterns
+## Creating Components
 
-### Nested Components
 ```javascript
-const TodoItem = (todo, emit) => h('li', {}, [
-    h('span', {}, [todo.text]),
-    h('button', { onClick: () => emit('delete', todo.id) }, ['Delete'])
-]);
+import { defineComponent, h } from './core/index.js';
 
-const TodoList = (todos, emit) => h('ul', {}, 
-    todos.map(todo => TodoItem(todo, emit))
-);
+const Counter = defineComponent({
+  state() {
+    return { count: 0 };
+  },
+
+  onMounted() {
+    console.log('Counter mounted');
+  },
+
+  increment() {
+    this.updateState({ count: this.state.count + 1 });
+  },
+
+  render() {
+    return h('div', {}, [
+      h('span', {}, [`Count: ${this.state.count}`]),
+      h('button', {
+        on: { click: () => this.increment() }
+      }, ['Increment'])
+    ]);
+  }
+});
 ```
 
-### Fragment Usage
-```javascript
-import { hFragment } from 'mini-framework';
+## Using the Router
 
-const MultipleElements = () => hFragment([
-    h('h1', {}, ['Title']),
-    h('p', {}, ['Paragraph 1']),
-    h('p', {}, ['Paragraph 2'])
-]);
+```javascript
+import { createApp } from './core/app.js';
+import { HashRouter } from './core/router.js';
+import { RouterLink, RouterOutlet } from './core/router-components.js';
+
+const routes = [
+  { path: '/', component: Home },
+  { path: '/about', component: About },
+  { path: '/users/:id', component: UserProfile }
+];
+
+const router = new HashRouter(routes);
+const app = createApp(App, {}, { router });
 ```
+
+## How It Works
+
+1. **Virtual DOM**: When you create elements using `h()`, you're building a virtual DOM tree. This is a lightweight JavaScript representation of what you want the real DOM to look like.
+
+2. **Component Lifecycle**: 
+   - Components are created with `defineComponent()`
+   - The `mount()` process creates the initial DOM
+   - State updates trigger re-renders through the virtual DOM diffing
+   - The `unmount()` process cleans up resources
+
+3. **State Management**:
+   - Components maintain their own state
+   - `updateState()` triggers re-renders
+   - Changes are batched for performance using the scheduler
+
+4. **Event System**:
+   - Events are delegated through the component hierarchy
+   - The `emit()` system allows child-to-parent communication
+   - Event handlers are automatically cleaned up on unmount

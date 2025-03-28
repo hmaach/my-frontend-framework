@@ -145,8 +145,55 @@ export function cleanArray(arr) {
 }
 
 export function arraysDiff(oldArray, newArray) {
+  const oldsCount = makeCountMap(oldArray);
+  const newsCount = makeCountMap(newArray);
+  const diff = mapsDiff(oldsCount, newsCount);
+
+  const added = diff.added.flatMap((key) =>
+    Array(newsCount.get(key)).fill(key)
+  );
+
+  const removed = diff.removed.flatMap((key) =>
+    Array(oldsCount.get(key)).fill(key)
+  );
+
+  for (const key of diff.updated) {
+    const oldCount = oldsCount.get(key);
+    const newCount = newsCount.get(key);
+    const delta = newCount - oldCount;
+
+    if (delta > 0) {
+      added.push(...Array(delta).fill(key));
+    } else {
+      removed.push(...Array(-delta).fill(key));
+    }
+  }
+
   return {
-    added: newArray.filter((newItem) => !oldArray.includes(newItem)),
-    removed: oldArray.filter((oldItem) => !newArray.includes(oldItem)),
+    added,
+    removed,
+  };
+}
+
+export function makeCountMap(array) {
+  const map = new Map();
+
+  for (const item of array) {
+    map.set(item, (map.get(item) || 0) + 1);
+  }
+
+  return map;
+}
+
+export function mapsDiff(oldMap, newMap) {
+  const oldKeys = Array.from(oldMap.keys());
+  const newKeys = Array.from(newMap.keys());
+
+  return {
+    added: newKeys.filter((key) => !oldMap.has(key)),
+    removed: oldKeys.filter((key) => !newMap.has(key)),
+    updated: newKeys.filter(
+      (key) => oldMap.has(key) && oldMap.get(key) !== newMap.get(key)
+    ),
   };
 }

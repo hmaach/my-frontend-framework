@@ -4,49 +4,68 @@ export const DOM_TYPES = {
   TEXT: "text",
   ELEMENT: "element",
   FRAGMENT: "fragment",
+  COMPONENT: "component",
+  SLOT: "slot",
 };
 
-export class DOM {
-  static h(tag, props = {}, children = []) {
-    return {
-      tag,
-      props,
-      children: DOM.mapTextNodes(cleanArray(children)),
-      type: DOM_TYPES.ELEMENT,
-    };
-  }
-
-  static mapTextNodes(children) {
-    return children.map((child) =>
-      typeof child === "string" ? DOM.hString(child) : child
-    );
-  }
-
-  static hString(str) {
-    return { type: DOM_TYPES.TEXT, value: str };
-  }
-
-  static hFragment(vNodes) {
-    return {
-      type: DOM_TYPES.FRAGMENT,
-      children: DOM.mapTextNodes(cleanArray(vNodes)),
-    };
-  }
-
-  static extractChildren(vdom) {
-    if (vdom.children == null) {
-      return [];
-    }
-    const children = [];
-    for (const child of vdom.children) {
-      if (child.type === DOM_TYPES.FRAGMENT) {
-        children.push(...DOM.extractChildren(child, children));
-      } else {
-        children.push(child);
-      }
-    }
-    return children;
-  }
+export function h(tag, props = {}, children = []) {
+  const type =
+    typeof tag === "function" ? DOM_TYPES.COMPONENT : DOM_TYPES.ELEMENT;
+  return {
+    tag,
+    props,
+    type,
+    children: mapTextNodes(cleanArray(children)),
+  };
 }
 
-export const { h, hString, hFragment, extractChildren } = DOM;
+function mapTextNodes(children) {
+  return children.map((child) =>
+    typeof child === "string" ? hString(child) : child
+  );
+}
+
+export function hString(str) {
+  return { type: DOM_TYPES.TEXT, value: str };
+}
+
+export function hFragment(vNodes) {
+  return {
+    type: DOM_TYPES.FRAGMENT,
+    children: mapTextNodes(cleanArray(vNodes)),
+  };
+}
+
+export function extractChildren(vdom) {
+  if (vdom.children == null) {
+    return [];
+  }
+  const children = [];
+  for (const child of vdom.children) {
+    if (child.type === DOM_TYPES.FRAGMENT) {
+      children.push(...extractChildren(child, children));
+    } else {
+      children.push(child);
+    }
+  }
+  return children;
+}
+
+export function isComponent({ tag }) {
+  return typeof tag === "function";
+}
+
+let hSlotCalled = false;
+
+export function didCreateSlot() {
+  return hSlotCalled;
+}
+
+export function resetDidCreateSlot() {
+  hSlotCalled = false;
+}
+
+export function hSlot(children = []) {
+  hSlotCalled = true;
+  return { type: DOM_TYPES.SLOT, children };
+}

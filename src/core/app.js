@@ -1,49 +1,41 @@
-import { destroyDOM } from "./destroy-dom.js";
-import { Dispatcher } from "./dispatcher.js";
-import { patchDOM } from "./patch-dom.js";
 import { mountDOM } from "./mount-dom.js";
+import { destroyDOM } from "./destroy-dom.js";
+import { h } from "./dom.js";
+import { NoopRouter } from "./router.js";
 
-export function createApp({ state, reducers, view }) {
-  let currentState = state;
-  let rootElement = null;
-  let oldTree = null;
-  
-  function emit(action, payload) {
-    const reducer = reducers[action];
-    if (reducer) {
-      currentState = reducer(currentState, payload);
-      render();
-    }
+export function createApp(RootComponent, props = {}, options = {}) {
+  let parentEl = null;
+  let isMounted = false;
+  let vdom = null;
+
+  const context = {
+    router: options.router || new NoopRouter(),
+  };
+
+  function reset() {
+    parentEl = null;
+    isMounted = false;
+    vdom = null;
   }
-
-  function render() {
-    const newTree = view(currentState, emit);
-    
-    if (!rootElement) {
-      return;
-    }
-
-    if (!oldTree) {
-      mountDOM(newTree, rootElement);
-    } else {
-      patchDOM(oldTree, newTree, rootElement);
-    }
-    
-    oldTree = newTree;
-  }
-
   return {
-    emit,
-    mount(element) {
-      rootElement = element;
-      render();
+    mount(_parentEl) {
+      if (isMounted) {
+        throw new Error("The application is already mounted");
+      }
+      parentEl = _parentEl;
+      vdom = h(RootComponent, props);
+      mountDOM(vdom, parentEl, null, { appContext: context });
+
+      context.router.init();
+      isMounted = true;
     },
     unmount() {
-      if (oldTree) {
-        destroyDOM(oldTree);
+      if (!isMounted) {
+        throw new Error("The application is not mounted");
       }
-      rootTree = null;
-      oldTree = null;
-    }
+      destroyDOM(vdom);
+      context.router.destroy();
+      reset();
+    },
   };
 }

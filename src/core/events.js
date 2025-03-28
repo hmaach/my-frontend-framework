@@ -1,21 +1,24 @@
-export const addEvListener = (eventName, handler, el) => {
-    const normalizedName = eventName.toLowerCase().replace(/^on/, '');
-    el[`on${normalizedName}`] = handler;
-    return handler;
-};
+export function addEvListener(eventName, handler, el, hostComponent = null) {
+  function boundHandler() {
+    hostComponent
+      ? handler.apply(hostComponent, arguments)
+      : handler(...arguments);
+  }
+  el[`on${eventName}`] = handler;
+  return boundHandler;
+}
 
-export const addEvListeners = (listeners = {}, el) => {
-    const addedListeners = {};
-    Object.entries(listeners).forEach(([eventName, handler]) => {
-        const listener = addEvListener(eventName, handler, el);
-        addedListeners[eventName] = listener;
-    });
-    return addedListeners;
-};
+export function addEvListeners(listeners = {}, el, hostComponent = null) {
+  const addedListeners = {};
+  Object.entries(listeners).forEach(([eventName, handler]) => {
+    const listener = addEvListener(eventName, handler, el, hostComponent);
+    addedListeners[eventName] = listener;
+  });
+  return addedListeners;
+}
 
-export const removeEvListeners = (listeners = {}, el) => {
-    Object.entries(listeners).forEach(([eventName, handler]) => {
-        const normalizedName = eventName.toLowerCase().replace(/^on/, '');
-        el[`on${normalizedName}`] = null;
-    });
-};
+export function removeEvListeners(listeners = {}, el) {
+  Object.entries(listeners).forEach(([eventName]) => {
+    el[`on${eventName}`] = null;
+  });
+}

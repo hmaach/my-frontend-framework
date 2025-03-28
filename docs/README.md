@@ -1,38 +1,42 @@
 # Mini-Framework Documentation
 
 ## Overview
-Mini-Framework is a lightweight JavaScript framework that provides a robust foundation for building web applications. It features a virtual DOM implementation, event system, routing, and state management.
 
-## Core Features
-- Virtual DOM with efficient diffing and patching
-- Comprehensive event handling system
+Mini-Framework is a lightweight JavaScript framework for building user interfaces. It provides:
+
 - Component-based architecture
-- State management with reducers
-- Simple routing system
+- Virtual DOM for efficient updates
+- Event handling system
+- Router for single-page applications
+- Slots for component composition
+- State management
 
 ## Core Concepts
 
-### 1. Virtual DOM
-The framework uses a virtual DOM to optimize rendering performance. Changes are first made to a virtual representation of the DOM, then efficiently patched to the real DOM.
+### Components
 
-### 2. Event System
-Two event handling approaches are provided:
-- Direct event binding using `addEvent` method
-- Declarative event handling through component props
+Components are the building blocks of your application. Each component can:
+- Manage its own state
+- Handle lifecycle events (mounted, unmounted)
+- Render UI elements
+- Emit and handle events
 
-### 3. Application Architecture
-Applications are built using:
-- State: Application data
-- Reducers: Functions that modify state
-- Views: Functions that render UI based on state
+### Virtual DOM
 
-### 4. Component Creation
-Components are created using the `h` function:
-```javascript
-h('div', { class: 'container' }, [
-    h('h1', {}, ['Hello World']),
-    h('button', { onClick: handler }, ['Click me'])
-])
-```
+The framework uses a Virtual DOM to optimize rendering performance by:
+- Creating a lightweight representation of the DOM
+- Efficiently comparing and updating only changed elements
+- Batching updates using a scheduler
 
-For detailed examples and usage, see [Examples](examples.md).
+### Routing
+
+Built-in router supports:
+- Hash-based navigation
+- Route parameters
+- Query string parsing
+- Nested routes
+- Route redirects
+
+## Getting Started
+
+See the [examples.md](./examples.md) for detailed code examples and usage patterns.
