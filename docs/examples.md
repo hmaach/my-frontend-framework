@@ -77,7 +77,7 @@ const card = h('div', { class: 'card' }, [
 ## Creating Components
 
 ```javascript
-import { defineComponent, h } from './core/index.js';
+import { defineComponent, h } from './src/index.js';
 
 const Counter = defineComponent({
   state() {
