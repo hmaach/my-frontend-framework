@@ -2,19 +2,19 @@ import { setAttributes } from './attrs.js'
 import { addEventListeners } from './events.js'
 import { DOM_TYPES } from './h.js'
 
-export const mountDOM = (virtualDom, parentElement) => {
-    
+export const mountDOM = (virtualDom, parentElement, index) => {
+
     switch (virtualDom.type) {
         case DOM_TYPES.TEXT: {
-            createTextNode(virtualDom, parentElement)
+            createTextNode(virtualDom, parentElement, index)
             break
         }
         case DOM_TYPES.ELEMENT: {
-            createElementNode(virtualDom, parentElement)
+            createElementNode(virtualDom, parentElement, index)
             break
         }
         case DOM_TYPES.FRAGMENT: {
-            createFragmentNodes(virtualDom, parentElement)
+            createFragmentNodes(virtualDom, parentElement, index)
             break
         }
         default: {
@@ -23,7 +23,7 @@ export const mountDOM = (virtualDom, parentElement) => {
     }
 }
 
-const createElementNode = (virtualDom, parentElement) => {
+const createElementNode = (virtualDom, parentElement, index) => {
     const { tag, props, children } = virtualDom
 
     const ElementNode = document.createElement(tag)
@@ -31,23 +31,44 @@ const createElementNode = (virtualDom, parentElement) => {
     virtualDom.el = ElementNode
 
     children.forEach((child) => mountDOM(child, ElementNode))
-    parentElement.append(ElementNode)
+    insert(ElementNode, parentElement, index)
 }
 
-const createTextNode = (virtualDom, parentElement) => {
+const createTextNode = (virtualDom, parentElement, index) => {
     const textNode = document.createTextNode(virtualDom.value)
     virtualDom.el = textNode
-    parentElement.append(textNode)
+    insert(textNode, parentElement, index)
 }
 
-const createFragmentNodes = (virtualDom, parentEl) => {
+const createFragmentNodes = (virtualDom, parentEl, index) => {
     const { children } = virtualDom
     virtualDom.el = parentEl
-    children.forEach((child) => mountDOM(child, parentEl))
+    children.forEach((child, i) =>
+        mountDOM(child, parentEl, index ? index + i : null)
+    )
 }
 
 function addProps(el, props, vdom) {
     const { on: events, ...attrs } = props
     vdom.listeners = addEventListeners(events, el)
     setAttributes(el, attrs)
+}
+
+function insert(el, parentEl, index) {
+    // If index is null or undefined, simply append.
+    if (index == null) {
+        parentEl.append(el)
+        return
+    }
+
+    if (index < 0) {
+        throw new Error(`Index must be a positive integer, got ${index}`)
+    }
+
+    const children = parentEl.childNodes
+    if (index >= children.length) {
+        parentEl.append(el)
+    } else {
+        parentEl.insertBefore(el, children[index])
+    }
 }
