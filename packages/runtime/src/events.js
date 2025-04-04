@@ -5,15 +5,10 @@ export const addEventListeners = (listeners = {}, el) => {
     return listeners
 }
 
-const addEventListener = (event, handler, el) => {
+export const addEventListener = (event, handler, el) => {
     el.addEventListener(event, handler)
     return handler
 }
-
-// {
-//     click: () => { ... },
-//     }
-// el.removeEventListener('click', listeners['click'])
 
 export const removeEventListeners = (listeners = {}, el) => {
     Object.entries(listeners).forEach(([eventName, handler]) => {

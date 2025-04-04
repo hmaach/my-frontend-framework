@@ -1,6 +1,7 @@
 import { removeAttribute, removeStyle, setAttribute, setStyle } from "./attrs.js"
 import { destroyDOM } from "./dom_destroying.js"
 import { mountDOM } from "./dom_mounting.js"
+import { addEventListener } from "./events.js"
 import { DOM_TYPES, extractChildren } from "./h.js"
 import { areNodesEqual } from "./nodes-equal.js"
 import { ARRAY_DIFF_OP, arraysDiff, arraysDiffSequence } from "./utils/arrays.js"
