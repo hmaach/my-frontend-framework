@@ -24,7 +24,7 @@ class ArrayWithOriginalIndices {
     #originalIndices = []
     #equalsFn
 
-    #equalsFnconstructor(array, equalsFn) {
+    constructor(array, equalsFn) {
         this.#array = [...array]
         this.#originalIndices = array.map((_, i) => i)
         this.#equalsFn = equalsFn
