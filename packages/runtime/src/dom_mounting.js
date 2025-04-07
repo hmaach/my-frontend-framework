@@ -1,6 +1,7 @@
 import { setAttributes } from './attrs.js'
 import { addEventListeners } from './events.js'
 import { DOM_TYPES } from './h.js'
+import { extractPropsAndEvents } from './utils/props.js'
 
 export const mountDOM = (virtualDom, parentElement, index, hostComponent = null) => {
 
@@ -27,14 +28,24 @@ export const mountDOM = (virtualDom, parentElement, index, hostComponent = null)
     }
 }
 
-const createElementNode = (virtualDom, parentElement, index) => {
-    const { tag, props, children } = virtualDom
+function createComponentNode(vdom, parentEl, index, hostComponent) {
+    const Component = vdom.tag
+    const { props, events } = extractPropsAndEvents(vdom)
+    const component = new Component(props, events, hostComponent)
+
+    component.mount(parentEl, index)
+    vdom.component = component
+    vdom.el = component.firstElement
+}
+
+const createElementNode = (virtualDom, parentElement, index, hostComponent) => {
+    const { tag, children } = vdom
 
     const ElementNode = document.createElement(tag)
-    addProps(ElementNode, props, virtualDom)
+    addProps(element, vdom, hostComponent)
     virtualDom.el = ElementNode
 
-    children.forEach((child) => mountDOM(child, ElementNode))
+    children.forEach((child) => mountDOM(child, ElementNode, null, hostComponent))
     insert(ElementNode, parentElement, index)
 }
 
@@ -44,17 +55,23 @@ const createTextNode = (virtualDom, parentElement, index) => {
     insert(textNode, parentElement, index)
 }
 
-const createFragmentNodes = (virtualDom, parentEl, index) => {
-    const { children } = virtualDom
-    virtualDom.el = parentEl
-    children.forEach((child, i) =>
-        mountDOM(child, parentEl, index ? index + i : null)
+function createFragmentNodes(
+    vdom,
+    parentEl,
+    index,
+    hostComponent
+) {
+    const { children } = vdom
+    vdom.el = parentEl
+    children.forEach((child) =>
+        mountDOM(child, parentEl, index ? index + i : null, hostComponent)
     )
 }
 
-function addProps(el, props, vdom) {
-    const { on: events, ...attrs } = props
-    vdom.listeners = addEventListeners(events, el)
+function addProps(el, vdom, hostComponent) {
+    const { props: attrs, events } = extractPropsAndEvents(vdom)
+
+    vdom.listeners = addEventListeners(events, el, hostComponent)
     setAttributes(el, attrs)
 }
 

@@ -10,10 +10,19 @@ export function defineComponent({ render, state, ...methods }) {
         #isMounted = false
         #vdom = null
         #hostEl = null
+        #eventHandlers = null
+        #parentComponent = null
+        #dispatcher = new Dispatcher()
+        #subscriptions = []
 
-        constructor(props = {}) {
+        constructor(props = {},
+            eventHandlers = {},
+            parentComponent = null,
+        ) {
             this.props = props
             this.state = state ? state(props) : {}
+            this.#eventHandlers = eventHandlers
+            this.#parentComponent = parentComponent
         }
 
         get elements() {
@@ -52,14 +61,39 @@ export function defineComponent({ render, state, ...methods }) {
             }
 
             this.#vdom = this.render()
-            mountDOM(this.#vdom, hostEl, index)
+            mountDOM(this.#vdom, hostEl, index, this)
+            this.#wireEventHandlers()
+
             this.#hostEl = hostEl
             this.#isMounted = true
+        }
+
+        unmount() {
+            if (!this.#isMounted) {
+                throw new Error('Component is not mounted')
+            }
+
+            destroyDOM(this.#vdom)
+            this.#subscriptions.forEach((unsubscribe) => unsubscribe())
+
+            this.#vdom = null
+            this.#hostEl = null
+            this.#isMounted = false
+            this.#subscriptions = []
         }
 
         updateState(state) {
             this.state = { ...this.state, ...state }
             this.#patch()
+        }
+
+        updateProps(props) {
+            this.props = { ...this.props, ...props }
+            this.#patch()
+        }
+
+        emit(eventName, payload) {
+            this.#dispatcher.dispatch(eventName, payload)
         }
 
         #patch() {
@@ -70,14 +104,21 @@ export function defineComponent({ render, state, ...methods }) {
             this.#vdom = patchDOM(this.#vdom, vdom, this.#hostEl, this)
         }
 
-        unmount() {
-            if (!this.#isMounted) {
-                throw new Error('Component is not mounted')
-            }
-            destroyDOM(this.#vdom)
-            this.#vdom = null
-            this.#hostEl = null
-            this.#isMounted = false
+        #wireEventHandlers() {
+            this.#subscriptions = Object.entries(this.#eventHandlers).map(
+                ([eventName, handler]) =>
+                    this.#wireEventHandler(eventName, handler)
+            )
+        }
+
+        #wireEventHandler(eventName, handler) {
+            return this.#dispatcher.subscribe(eventName, (payload) => {
+                if (this.#parentComponent) {
+                    handler.call(this.#parentComponent, payload)
+                } else {
+                    handler(payload)
+                }
+            })
         }
     }
 
