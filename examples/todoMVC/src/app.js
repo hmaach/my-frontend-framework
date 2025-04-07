@@ -1,6 +1,7 @@
 import {
   defineComponent,
   h,
+  hFragment,
   HashRouter,
   addEvListener,
 } from "../../../src/index.js";
@@ -75,29 +76,42 @@ export const App = defineComponent({
   render() {
     const { todos, route } = this.state;
 
-    return h("div", { className: "todoapp" }, [
-      h(Header, {
-        on: {
-          addItem: (payload) => this.addItem(payload),
-        },
-      }),
-      h(TodoList, {
-        todos,
-        route,
-        on: {
-          toggleItem: (payload) => this.toggleItem(payload),
-          toggleAll: (payload) => this.toggleAll(payload),
-          removeItem: (payload) => this.removeItem(payload),
-          updateItem: (payload) => this.updateItem(payload),
-        },
-      }),
-      h(Footer, {
-        todos,
-        route,
-        on: {
-          removeCompleted: () => this.removeCompleted(),
-        },
-      }),
+    return hFragment([
+      h("section", { className: "todoapp", id: "root" }, [
+        h(Header, {
+          on: {
+            addItem: (payload) => this.addItem(payload),
+          },
+        }),
+        h(TodoList, {
+          todos,
+          route,
+          on: {
+            toggleItem: (payload) => this.toggleItem(payload),
+            toggleAll: (payload) => this.toggleAll(payload),
+            removeItem: (payload) => this.removeItem(payload),
+            updateItem: (payload) => this.updateItem(payload),
+          },
+        }),
+        h(Footer, {
+          todos,
+          route,
+          on: {
+            removeCompleted: () => this.removeCompleted(),
+          },
+        }),
+      ]),
+      h("footer", { className: "info" }, [
+        h("p", {}, ["Double-click to edit a todo"]),
+        h("p", {}, [
+          "Created by ",
+          h("a", { href: "https://github.com/khlifihamza" }, ["khlifi hamza"]),
+        ]),
+        h("p", {}, [
+          "Part of ",
+          h("a", { href: "http://todomvc.com" }, ["TodoMVC"]),
+        ]),
+      ]),
     ]);
   },
 });
