@@ -2,7 +2,7 @@ import { setAttributes } from './attrs.js'
 import { addEventListeners } from './events.js'
 import { DOM_TYPES } from './h.js'
 
-export const mountDOM = (virtualDom, parentElement, index) => {
+export const mountDOM = (virtualDom, parentElement, index, hostComponent = null) => {
 
     switch (virtualDom.type) {
         case DOM_TYPES.TEXT: {
@@ -15,6 +15,10 @@ export const mountDOM = (virtualDom, parentElement, index) => {
         }
         case DOM_TYPES.FRAGMENT: {
             createFragmentNodes(virtualDom, parentElement, index)
+            break
+        }
+        case DOM_TYPES.COMPONENT: {
+            createComponentNode(vdom, parentEl, index, hostComponent)
             break
         }
         default: {
