@@ -17,7 +17,7 @@ You can use mini-framework directly via CDN:
 
 ```html
 <script type="module">
-  import { createApp, h, hString, hFragment } from 'https://unpkg.com/mini-framework@latest'
+  import { createApp, h, hString, hFragment } from './src/index.js'
 </script>
 ```
 
@@ -26,7 +26,7 @@ You can use mini-framework directly via CDN:
 Here's a simple counter example:
 
 ```javascript
-import { createApp, h, hFragment } from 'mini-framework'
+import { createApp, h, hFragment } from './src/index.js'
 
 // Define initial state
 const state = { count: 0 }
@@ -104,7 +104,7 @@ h('input', {
 Components are functions that receive state and emit function:
 
 ```javascript
-import { createApp, h, hFragment } from 'mini-framework';
+import { createApp, h, hFragment } from './src/index.js'
 
 const Counter = defineComponent({
   state() {
@@ -175,7 +175,7 @@ function ListView({ items }, emit) {
 mini-framework provides a built-in HashRouter for client-side routing. The router uses URL hashes (#) for navigation and supports route parameters.
 
 ```javascript
-import { createApp, h, HashRouter, hFragment } from 'mini-framework'
+import { createApp, h, HashRouter, hFragment } from './src/index.js'
 
 // Define routes
 const router = new HashRouter([
