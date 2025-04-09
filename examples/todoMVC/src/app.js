@@ -105,7 +105,7 @@ export const App = defineComponent({
         h("p", {}, ["Double-click to edit a todo"]),
         h("p", {}, [
           "Created by ",
-          h("a", { href: "https://github.com/khlifihamza" }, ["khlifi hamza"]),
+          h("a", { href: "https://learn.zone01oujda.ma/git/yelmach/mini-framework/" }, ["obsydian team"]),
         ]),
         h("p", {}, [
           "Part of ",
