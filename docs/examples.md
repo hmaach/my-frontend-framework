@@ -13,7 +13,7 @@ mini-framework is a lightweight JavaScript framework for building reactive user 
 
 ## Installation
 
-You can use mini-framework directly via CDN:
+You can use mini-framework directly via:
 
 ```html
 <script type="module">
