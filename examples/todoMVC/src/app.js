@@ -12,9 +12,9 @@ import { Footer } from "./components/Footer.js";
 const generateId = () => Math.random().toString(36).substring(2);
 
 const router = new HashRouter([
-  { path: "/", component: null },
-  { path: "/active", component: null },
-  { path: "/completed", component: null },
+  { path: "/"},
+  { path: "/active"},
+  { path: "/completed"},
 ]);
 
 export const App = defineComponent({
