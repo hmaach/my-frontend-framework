@@ -1,6 +1,6 @@
-# MiniDOM Framework Documentation
+# obsydian Framework Documentation
 
-MiniDOM is a lightweight JavaScript framework for building user interfaces with a virtual DOM approach. This documentation will help you understand how to use the framework's features and components.
+obsydian is a lightweight JavaScript framework for building user interfaces with a virtual DOM approach. This documentation will help you understand how to use the framework's features and components.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ MiniDOM is a lightweight JavaScript framework for building user interfaces with 
 
 ## Features
 
-MiniDOM provides the following core features:
+obsydian provides the following core features:
 
 - **Virtual DOM**: Efficient DOM updates through diffing and patching
 - **Component-based Architecture**: Create reusable, encapsulated UI components
@@ -29,13 +29,13 @@ MiniDOM provides the following core features:
 To create and mount an application, use the `createApp` function:
 
 ```javascript
-import { createApp, defineComponent, h } from 'minidom';
+import { createApp, defineComponent, h } from './src/index.js';
 
 // Create a root component
 const App = defineComponent({
   render() {
     return h('div', { class: 'app' }, [
-      h('h1', {}, ['Hello, MiniDOM!'])
+      h('h1', {}, ['Hello, obsydian!'])
     ]);
   }
 });
@@ -52,7 +52,7 @@ app.mount(document.getElementById('root'));
 The framework uses the `h` (hyperscript) function to create virtual DOM elements:
 
 ```javascript
-import { h } from 'minidom';
+import { h } from './src/index.js';
 
 // Creating a div with a class
 const div = h('div', { class: 'container' }, []);
@@ -93,7 +93,7 @@ const heading = h('h1', {}, [hString('Hello, World!')]);
 For grouping elements without adding an extra DOM node, use the `hFragment` function:
 
 ```javascript
-import { hFragment, h } from 'minidom';
+import { hFragment, h } from './src/index.js';
 
 const fragment = hFragment([
   h('h1', {}, ['Title']),
@@ -109,7 +109,7 @@ const fragment = hFragment([
 Use the `defineComponent` function to create reusable components:
 
 ```javascript
-import { defineComponent, h } from 'minidom';
+import { defineComponent, h } from './src/index.js';
 
 const Button = defineComponent({
   render() {
@@ -274,7 +274,7 @@ const styledDiv = h('div', {
 The framework includes a hash-based router for building single-page applications:
 
 ```javascript
-import { createApp, defineComponent, h, HashRouter } from 'minidom';
+import { createApp, defineComponent, h, HashRouter } from './src/index.js';
 
 const Home = defineComponent({
   render() {
@@ -603,7 +603,7 @@ const Footer = defineComponent({
 
 // Sample usage with some data
 const articles = [
-  { id: 1, title: 'Getting Started with MiniDOM', summary: 'Learn the basics of our framework', author: 'Jane Developer' },
+  { id: 1, title: 'Getting Started with obsydian', summary: 'Learn the basics of our framework', author: 'Jane Developer' },
   { id: 2, title: 'Advanced Component Patterns', summary: 'Take your component skills to the next level', author: 'John Coder' },
   { id: 3, title: 'Virtual DOM Explained', summary: 'Understanding the magic behind efficient updates', author: 'Alice Engineer' }
 ];
@@ -618,7 +618,7 @@ app.mount(document.getElementById('root'));
 The framework uses a scheduler to batch multiple state updates for efficiency:
 
 ```javascript
-import { nextTick } from 'minidom';
+import { nextTick } from './src/index.js';
 
 const Form = defineComponent({
   // ...
@@ -677,4 +677,4 @@ Events are handled using a declarative approach:
 
 ## Conclusion
 
-MiniDOM provides a powerful yet lightweight approach to building web interfaces. By understanding the core concepts of components, virtual DOM, and state management, you can build complex applications with maintainable code.
+obsydian provides a powerful yet lightweight approach to building web interfaces. By understanding the core concepts of components, virtual DOM, and state management, you can build complex applications with maintainable code.
