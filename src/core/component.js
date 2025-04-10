@@ -3,13 +3,10 @@ import { mountDOM } from "./mount-dom.js";
 import { patchDOM } from "./patch-dom.js";
 import {
   DOM_TYPES,
-  extractChildren,
-  didCreateSlot,
-  resetDidCreateSlot,
+  extractChildren,  
 } from "./dom.js";
 import { hasOwnProperty } from "../utils/objects.js";
 import { Dispatcher } from "./dispatcher.js";
-import { fillSlots } from "./slots.js";
 
 const emptyFn = () => {};
 
@@ -94,13 +91,7 @@ export function defineComponent({
     }
 
     render() {
-      const vdom = render.call(this);
-      if (didCreateSlot()) {
-        fillSlots(vdom, this.#children);
-        resetDidCreateSlot();
-      }
-
-      return vdom;
+      return render.call(this);
     }
 
     mount(hostEl, index = null) {

@@ -8,7 +8,6 @@ Mini-Framework is a lightweight JavaScript framework for building user interface
 - Virtual DOM for efficient updates
 - Event handling system
 - Router for single-page applications
-- Slots for component composition
 - State management
 
 ## Core Concepts
