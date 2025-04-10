@@ -1,333 +1,680 @@
-# mini-framework Framework
+# MiniDOM Framework Documentation
 
-mini-framework is a lightweight JavaScript framework for building reactive user interfaces with a simple state management system.
+MiniDOM is a lightweight JavaScript framework for building user interfaces with a virtual DOM approach. This documentation will help you understand how to use the framework's features and components.
+
+## Table of Contents
+
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Creating Elements](#creating-elements)
+- [Component System](#component-system)
+- [Event Handling](#event-handling)
+- [Routing](#routing)
+- [Lifecycle Methods](#lifecycle-methods)
+- [Advanced Features](#advanced-features)
 
 ## Features
 
-- Virtual DOM implementation
-- State management with reducers
-- Component-based architecture
-- Event handling system
-- No dependencies
-- Small footprint (~5KB minified)
+MiniDOM provides the following core features:
 
-## Installation
+- **Virtual DOM**: Efficient DOM updates through diffing and patching
+- **Component-based Architecture**: Create reusable, encapsulated UI components
+- **Event Handling**: Simple API for adding and managing event listeners
+- **Routing**: Built-in hash-based router for single-page applications
+- **Lifecycle Methods**: Control component behavior through lifecycle hooks
+- **Attributes Management**: Easy API for handling element attributes, classes, and styles
 
-You can use mini-framework directly via:
+## Getting Started
 
-```html
-<script type="module">
-  import { createApp, h, hString, hFragment } from './src/index.js'
-</script>
-```
-
-## Basic Usage
-
-Here's a simple counter example:
+To create and mount an application, use the `createApp` function:
 
 ```javascript
-import { createApp, h, hFragment } from './src/index.js'
+import { createApp, defineComponent, h } from 'minidom';
 
-// Define initial state
-const state = { count: 0 }
-
-// Define reducers
-const reducers = {
-  "increment": (state) => ({ ...state, count: state.count + 1 }),
-  "decrement": (state) => ({ ...state, count: state.count - 1 })
-}
-
-// Create view component
-function Counter(state, emit) {
-  return hFragment([
-    h('button', { on: { click: () => emit('decrement') }}, ['-']),
-    h('span', {}, [state.count]),
-    h('button', { on: { click: () => emit('increment') }}, ['+'])
-  ])
-}
-
-// Mount the app
-createApp({ state, reducers, view: Counter }).mount(document.body)
-```
-
-## Core Concepts
-
-### Virtual DOM Elements
-
-The framework provides three main functions for creating virtual DOM elements:
-
-- `h(tag, props, children)`: Creates an element node
-- `hString(text)`: Creates a text node
-- `hFragment(nodes)`: Creates a fragment containing multiple nodes
-
-```javascript
-// Element example
-h('div', { class: 'container' }, [
-  h('h1', {}, ['Hello World'])
-])
-
-// Fragment example
-hFragment([
-  h('h1', {}, ['Title']),
-  h('p', {}, ['Content'])
-])
-```
-
-### State Management
-
-State is managed through reducers that are pure functions taking the current state and returning a new state:
-
-```javascript
-const reducers = {
-  "update-value": (state, newValue) => ({
-    ...state,
-    value: newValue
-  })
-}
-```
-
-### Event Handling
-
-Events are handled through the `on` prop and emit actions to reducers:
-
-```javascript
-h('input', {
-  value: state.value,
-  on: {
-    input: (e) => emit('update-value', e.target.value)
+// Create a root component
+const App = defineComponent({
+  render() {
+    return h('div', { class: 'app' }, [
+      h('h1', {}, ['Hello, MiniDOM!'])
+    ]);
   }
-})
+});
+
+// Create and mount the application
+const app = createApp(App);
+app.mount(document.getElementById('root'));
 ```
 
-### Component Creation
+## Creating Elements
 
-Components are functions that receive state and emit function:
+### Basic Elements
+
+The framework uses the `h` (hyperscript) function to create virtual DOM elements:
 
 ```javascript
-import { createApp, h, hFragment } from './src/index.js'
+import { h } from 'minidom';
 
+// Creating a div with a class
+const div = h('div', { class: 'container' }, []);
+
+// Creating a paragraph with text
+const paragraph = h('p', {}, ['This is a paragraph']);
+
+// Creating a link with attributes
+const link = h('a', { href: 'https://example.com', target: '_blank' }, ['Visit Example']);
+```
+
+### Nesting Elements
+
+You can nest elements by adding them to the children array:
+
+```javascript
+const card = h('div', { class: 'card' }, [
+  h('div', { class: 'card-header' }, [
+    h('h2', {}, ['Card Title'])
+  ]),
+  h('div', { class: 'card-body' }, [
+    h('p', {}, ['Card content goes here']),
+    h('button', { class: 'btn' }, ['Click Me'])
+  ])
+]);
+```
+
+### Text Nodes
+
+For simple text nodes, you can include strings in the children array:
+
+```javascript
+const heading = h('h1', {}, ['Hello, World!']);
+```
+
+### Fragments
+
+For grouping elements without adding an extra DOM node, use the `hFragment` function:
+
+```javascript
+import { hFragment, h } from 'minidom';
+
+const fragment = hFragment([
+  h('h1', {}, ['Title']),
+  h('p', {}, ['Paragraph']),
+  h('button', {}, ['Button'])
+]);
+```
+
+## Component System
+
+### Defining Components
+
+Use the `defineComponent` function to create reusable components:
+
+```javascript
+import { defineComponent, h } from 'minidom';
+
+const Button = defineComponent({
+  render() {
+    return h('button', { class: 'btn' }, [this.props.label || 'Button']);
+  }
+});
+
+// Using the component
+const buttonElement = h(Button, { label: 'Click Me' }, []);
+```
+
+### Component with State
+
+Components can have internal state:
+
+```javascript
 const Counter = defineComponent({
-  state() {
-    return { count: 0 };
+  // Initialize state based on props
+  state(props) {
+    return {
+      count: props.initialCount || 0
+    };
   },
-
-  onMounted() {
-    console.log('Counter mounted');
-  },
-
-  increment() {
-    this.updateState({ count: this.state.count + 1 });
-  },
-
+  
+  // Render method
   render() {
     return h('div', {}, [
-      h('span', {}, [`Count: ${this.state.count}`]),
-      h('button', {
-        on: { click: () => this.increment() }
+      h('p', {}, [`Count: ${this.state.count}`]),
+      h('button', { 
+        on: {
+          click: this.increment
+        }
       }, ['Increment'])
     ]);
+  },
+  
+  // Custom methods
+  increment() {
+    this.updateState({
+      count: this.state.count + 1
+    });
+  }
+});
+
+// Using the component with initial props
+const counterElement = h(Counter, { initialCount: 5 }, []);
+```
+
+## Event Handling
+
+### Adding Event Listeners
+
+Add event listeners using the `on` property in the props object:
+
+```javascript
+const button = h('button', { 
+  on: {
+    click: () => console.log('Button clicked!'),
+    mouseover: () => console.log('Mouse over'),
+    mouseout: () => console.log('Mouse out')
+  }
+}, ['Click Me']);
+```
+
+### Event Handling in Components
+
+In components, you can define methods to handle events:
+
+```javascript
+const Form = defineComponent({
+  state() {
+    return { 
+      name: '',
+      email: ''
+    };
+  },
+  
+  render() {
+    return h('form', { 
+      on: { 
+        submit: this.handleSubmit 
+      }
+    }, [
+      h('input', { 
+        type: 'text',
+        value: this.state.name,
+        on: {
+          input: this.handleNameChange
+        }
+      }, []),
+      h('input', { 
+        type: 'email',
+        value: this.state.email,
+        on: {
+          input: this.handleEmailChange
+        }
+      }, []),
+      h('button', { type: 'submit' }, ['Submit'])
+    ]);
+  },
+  
+  handleSubmit(event) {
+    event.preventDefault();
+    console.log('Form submitted', this.state);
+  },
+  
+  handleNameChange(event) {
+    this.updateState({ name: event.target.value });
+  },
+  
+  handleEmailChange(event) {
+    this.updateState({ email: event.target.value });
+  }
+});
+```
+
+## Adding Attributes
+
+### Basic Attributes
+
+Add HTML attributes directly in the props object:
+
+```javascript
+const image = h('img', { 
+  src: 'image.jpg',
+  alt: 'Description',
+  width: 300,
+  height: 200,
+  'data-custom': 'value' // Custom data attributes
+}, []);
+```
+
+### CSS Classes
+
+You can set CSS classes in several ways:
+
+```javascript
+// As a string
+const div1 = h('div', { class: 'container primary' }, []);
+
+// As an array
+const div2 = h('div', { class: ['container', 'primary'] }, []);
+```
+
+### Inline Styles
+
+Set inline styles using the style object:
+
+```javascript
+const styledDiv = h('div', { 
+  style: {
+    color: 'red',
+    backgroundColor: 'black',
+    fontSize: '16px',
+    padding: '10px'
+  }
+}, ['Styled Text']);
+```
+
+## Routing
+
+The framework includes a hash-based router for building single-page applications:
+
+```javascript
+import { createApp, defineComponent, h, HashRouter } from 'minidom';
+
+const Home = defineComponent({
+  render() {
+    return h('div', {}, ['Home Page']);
+  }
+});
+
+const About = defineComponent({
+  render() {
+    return h('div', {}, ['About Page']);
+  }
+});
+
+const App = defineComponent({
+  render() {
+    const { matchedRoute } = this.appContext.router;
+    
+    let content;
+    if (matchedRoute?.path === '/') {
+      content = h(Home, {}, []);
+    } else if (matchedRoute?.path === '/about') {
+      content = h(About, {}, []);
+    } else {
+      content = h('div', {}, ['Page not found']);
+    }
+    
+    return h('div', {}, [
+      // Navigation
+      h('nav', {}, [
+        h('button', { 
+          on: { click: () => this.appContext.router.navigateTo('/') }
+        }, ['Home']),
+        h('button', { 
+          on: { click: () => this.appContext.router.navigateTo('/about') }
+        }, ['About'])
+      ]),
+      // Content
+      content
+    ]);
+  }
+});
+
+// Create router with routes
+const router = new HashRouter([
+  { path: '/' },
+  { path: '/about' },
+  { path: '*', redirect: '/' } // Catch-all route
+]);
+
+// Create app with router
+const app = createApp(App, {}, { router });
+app.mount(document.getElementById('root'));
+```
+
+## Lifecycle Methods
+
+Components have two lifecycle hooks:
+
+```javascript
+const Timer = defineComponent({
+  state() {
+    return { seconds: 0 };
+  },
+  
+  render() {
+    return h('div', {}, [
+      h('p', {}, [`Seconds: ${this.state.seconds}`])
+    ]);
+  },
+  
+  // Called after the component is mounted to the DOM
+  onMounted() {
+    this.interval = setInterval(() => {
+      this.updateState({ seconds: this.state.seconds + 1 });
+    }, 1000);
+  },
+  
+  // Called before the component is removed from the DOM
+  onUnmounted() {
+    clearInterval(this.interval);
+  }
+});
+```
+
+## Component Communication
+
+### Parent to Child: Props
+
+Pass data from parent to child through props:
+
+```javascript
+const Parent = defineComponent({
+  render() {
+    return h('div', {}, [
+      h(Child, { message: 'Hello from parent' }, [])
+    ]);
+  }
+});
+
+const Child = defineComponent({
+  render() {
+    return h('div', {}, [
+      h('p', {}, [this.props.message])
+    ]);
+  }
+});
+```
+
+### Child to Parent: Events
+
+Children can communicate with parents through custom events:
+
+```javascript
+const Parent = defineComponent({
+  render() {
+    return h('div', {}, [
+      h(Child, { 
+        on: {
+          itemSelected: this.handleItemSelected
+        }
+      }, [])
+    ]);
+  },
+  
+  handleItemSelected(item) {
+    console.log('Selected item:', item);
+  }
+});
+
+const Child = defineComponent({
+  render() {
+    return h('button', { 
+      on: { click: this.selectItem }
+    }, ['Select Item']);
+  },
+  
+  selectItem() {
+    // Emit a custom event to the parent
+    this.emit('itemSelected', { id: 1, name: 'Item 1' });
   }
 });
 ```
 
 ## Advanced Features
 
-### Attributes and Styling
+### Fragments
+
+Use fragments to return multiple elements without a wrapper:
 
 ```javascript
-h('div', {
-  class: ['container', 'active'],
-  style: {
-    backgroundColor: 'red',
-    fontSize: '16px'
-  }
-}, [
-  // children
-])
-```
-
-### Conditional Rendering
-
-```javascript
-function ConditionalComponent(state, emit) {
-  return h('div', {}, [
-    state.isVisible 
-      ? h('p', {}, ['Visible'])
-      : null
-  ])
-}
-```
-
-### List Rendering
-
-```javascript
-function ListView({ items }, emit) {
-  return h('ul', {}, 
-    items.map((item, index) => 
-      h('li', { key: index }, [item])
-    )
-  )
-}
-```
-
-### Routing
-
-mini-framework provides a built-in HashRouter for client-side routing. The router uses URL hashes (#) for navigation and supports route parameters.
-
-```javascript
-import { createApp, h, HashRouter, hFragment } from './src/index.js'
-
-// Define routes
-const router = new HashRouter([
-  { path: "/", action: () => emit("set-filter", "all") },
-  { path: "/active", action: () => emit("set-filter", "active") },
-  { path: "/completed", action: () => emit("set-filter", "completed") }
-]);
-
-// Initialize router
-router.init()
-
-// Example TodoMVC implementation with routing
-const state = {
-  todos: [],
-  filter: "all"
-};
-
-const reducers = {
-  "set-filter": (state, filter) => ({
-    ...state,
-    filter
-  })
-};
-
-function App(state, emit) {
-  return hFragment([
-    h("ul", { class: "filters" }, [
-      h("li", {}, [
-        h("a", { 
-          href: "#/", 
-          class: state.filter === "all" ? "selected" : "",
-          on: { click: () => emit("set-filter", "all") }
-        }, ["All"])
+const TableRows = defineComponent({
+  render() {
+    return hFragment([
+      h('tr', {}, [
+        h('td', {}, ['Row 1, Cell 1']),
+        h('td', {}, ['Row 1, Cell 2'])
       ]),
-      h("li", {}, [
-        h("a", { 
-          href: "#/active", 
-          class: state.filter === "active" ? "selected" : "",
-          on: { click: () => emit("set-filter", "active") }
-        }, ["Active"])
-      ]),
-      h("li", {}, [
-        h("a", { 
-          href: "#/completed", 
-          class: state.filter === "completed" ? "selected" : "",
-          on: { click: () => emit("set-filter", "completed") }
-        }, ["Completed"])
+      h('tr', {}, [
+        h('td', {}, ['Row 2, Cell 1']),
+        h('td', {}, ['Row 2, Cell 2'])
       ])
-    ])
-  ]);
-}
+    ]);
+  }
+});
 ```
 
-#### Router Features
+### Nested Components
 
-- **Hash-based routing**: Uses URL hashes for navigation (#/path)
-- **Route actions**: Execute functions when routes match
-- **Navigation methods**: 
-  - `router.navigateTo(path)`: Navigate programmatically
-  - `router.back()`: Go to previous route
-  - `router.forward()`: Go to next route
-- **Route subscription**: Listen for route changes
-- **Route parameters**: Extract parameters from URLs
-
-#### Router API
+Components can be nested within other components:
 
 ```javascript
-// Create router instance
-const router = new HashRouter([
-  { 
-    path: "/", 
-    action: () => console.log("Home route") 
-  },
-  { 
-    path: "/users/:id", 
-    action: () => console.log("User route") 
+const App = defineComponent({
+  render() {
+    return h('div', { class: 'app' }, [
+      h(Header, {}, []),
+      h(Content, { articles: this.props.articles || [] }, []),
+      h(Footer, {}, [])
+    ]);
   }
-]);
-
-// Initialize router
-await router.init();
-
-// Subscribe to route changes
-router.subscribe(() => {
-  console.log("Route changed:", router.matchedRoute);
-  console.log("Route params:", router.params);
 });
 
-// Navigation
-router.navigateTo("/users/123");
-router.back();
-router.forward();
-```
-
-#### Route Parameters
-
-The router supports URL parameters and query strings:
-
-```javascript
-// Route with parameters
-const routes = [
-  { 
-    path: "/users/:id/posts/:postId",
-    action: () => {
-      const { id, postId } = router.params;
-      console.log(`User ${id}, Post ${postId}`);
-    }
+const Header = defineComponent({
+  render() {
+    return h('header', {}, [
+      h('h1', {}, ['My App']),
+      h(Navigation, {}, [])
+    ]);
   }
+});
+
+const Navigation = defineComponent({
+  render() {
+    return h('nav', {}, [
+      h('a', { href: '#/' }, ['Home']),
+      h('a', { href: '#/about' }, ['About']),
+      h('a', { href: '#/contact' }, ['Contact'])
+    ]);
+  }
+});
+
+// Article component to be used inside Content
+const Article = defineComponent({
+  render() {
+    const { title, summary, author } = this.props;
+    
+    return h('article', { class: 'article' }, [
+      h('h2', {}, [title]),
+      h('p', { class: 'summary' }, [summary]),
+      h('div', { class: 'author' }, [
+        h('span', {}, [`Written by: ${author}`])
+      ]),
+      h('button', { 
+        class: 'read-more',
+        on: { click: () => this.emit('articleSelected', this.props) }
+      }, ['Read More'])
+    ]);
+  }
+});
+
+// Content component with nested Article components
+const Content = defineComponent({
+  render() {
+    const { articles } = this.props;
+    
+    return h('main', { class: 'content' }, [
+      h('section', { class: 'welcome' }, [
+        h('h2', {}, ['Welcome to Our Site']),
+        h('p', {}, ['This is a demonstration of nested components in our framework.'])
+      ]),
+      h('section', { class: 'articles' }, [
+        h('h2', {}, ['Recent Articles']),
+        ...articles.map(article => 
+          h(Article, {
+            ...article,
+            on: {
+              articleSelected: this.handleArticleSelected
+            }
+          }, [])
+        )
+      ])
+    ]);
+  },
+  
+  handleArticleSelected(article) {
+    console.log('Article selected:', article);
+    // You could navigate to the article or perform other actions
+    this.appContext.router.navigateTo(`/article/${article.id}`);
+  }
+});
+
+// A simple form component for the newsletter
+const NewsletterForm = defineComponent({
+  state() {
+    return {
+      email: '',
+      submitted: false
+    };
+  },
+  
+  render() {
+    if (this.state.submitted) {
+      return h('div', { class: 'thank-you' }, [
+        h('p', {}, ['Thanks for subscribing!'])
+      ]);
+    }
+    
+    return h('form', { 
+      class: 'newsletter-form',
+      on: { submit: this.handleSubmit }
+    }, [
+      h('label', { for: 'email' }, ['Subscribe to our newsletter:']),
+      h('div', { class: 'form-row' }, [
+        h('input', { 
+          type: 'email', 
+          id: 'email',
+          placeholder: 'Your email address',
+          value: this.state.email,
+          on: { input: this.handleEmailChange }
+        }, []),
+        h('button', { type: 'submit' }, ['Subscribe'])
+      ])
+    ]);
+  },
+  
+  handleEmailChange(event) {
+    this.updateState({ email: event.target.value });
+  },
+  
+  handleSubmit(event) {
+    event.preventDefault();
+    // In a real app, you'd send this to a server
+    console.log('Subscribing email:', this.state.email);
+    this.updateState({ submitted: true });
+  }
+});
+
+// Footer component with nested NewsletterForm
+const Footer = defineComponent({
+  render() {
+    return h('footer', { class: 'site-footer' }, [
+      h('div', { class: 'footer-columns' }, [
+        h('div', { class: 'footer-column' }, [
+          h('h3', {}, ['About Us']),
+          h('p', {}, ['We are a company dedicated to creating amazing web experiences.'])
+        ]),
+        h('div', { class: 'footer-column' }, [
+          h('h3', {}, ['Quick Links']),
+          h('ul', {}, [
+            h('li', {}, [h('a', { href: '#/' }, ['Home'])]),
+            h('li', {}, [h('a', { href: '#/about' }, ['About'])]),
+            h('li', {}, [h('a', { href: '#/contact' }, ['Contact'])]),
+            h('li', {}, [h('a', { href: '#/terms' }, ['Terms of Service'])])
+          ])
+        ]),
+        h('div', { class: 'footer-column' }, [
+          h('h3', {}, ['Newsletter']),
+          h(NewsletterForm, {}, [])
+        ])
+      ]),
+      h('div', { class: 'copyright' }, [
+        h('p', {}, ['© 2025 My App. All rights reserved.'])
+      ])
+    ]);
+  }
+});
+
+// Sample usage with some data
+const articles = [
+  { id: 1, title: 'Getting Started with MiniDOM', summary: 'Learn the basics of our framework', author: 'Jane Developer' },
+  { id: 2, title: 'Advanced Component Patterns', summary: 'Take your component skills to the next level', author: 'John Coder' },
+  { id: 3, title: 'Virtual DOM Explained', summary: 'Understanding the magic behind efficient updates', author: 'Alice Engineer' }
 ];
 
-// URL with query parameters: #/search?q=test&page=1
-router.navigateTo("/search?q=test&page=1");
-console.log(router.query); // { q: "test", page: "1" }
+// Create and mount the application
+const app = createApp(App, { articles });
+app.mount(document.getElementById('root'));
 ```
 
-#### Best Practices for Routing
+### Scheduler and Batched Updates
 
-1. Initialize router before mounting the app
-2. Use route actions to update application state
-3. Keep routes simple and descriptive
-4. Handle 404 cases with a catch-all route
-5. Use router.subscribe() for global route change handling
+The framework uses a scheduler to batch multiple state updates for efficiency:
 
-## API Reference
+```javascript
+import { nextTick } from 'minidom';
 
-### Core Functions
+const Form = defineComponent({
+  // ...
+  
+  async submitForm() {
+    // Update multiple state properties
+    this.updateState({ isSubmitting: true });
+    this.updateState({ errors: {} });
+    
+    // Wait for DOM to update
+    await nextTick();
+    
+    // Continue with form submission
+    try {
+      // API call...
+      this.updateState({ isSubmitting: false, success: true });
+    } catch (error) {
+      this.updateState({ isSubmitting: false, errors: error.data });
+    }
+  }
+});
+```
 
-- `createApp({ state, reducers, view })`
-- `h(tag, props, children)`
-- `hString(text)`
-- `hFragment(nodes)`
+## Why Things Work This Way
 
-### Lifecycle Methods
+### Virtual DOM
 
-The app instance provides two main methods:
+The framework uses a virtual DOM approach because:
 
-- `mount(element)`: Mounts the app to a DOM element
-- `unmount()`: Removes the app from the DOM
+1. **Efficiency**: It minimizes costly DOM operations by only updating what has changed.
+2. **Declarative API**: Developers can describe how the UI should look, and the framework handles the DOM manipulations.
+3. **Consistency**: The virtual DOM provides a consistent programming model regardless of browser differences.
 
-## Best Practices
+### Component System
 
-1. Keep state immutable
-2. Use pure functions for reducers
-3. Split complex components into smaller ones
-4. Use fragments for multiple root elements
-5. Avoid direct DOM manipulation
+The component-based architecture:
 
-## Examples
+1. **Reusability**: Components can be reused throughout an application.
+2. **Encapsulation**: Components encapsulate their markup, styles, and logic.
+3. **Maintainability**: Small, focused components are easier to understand and maintain.
 
-Check the `/examples` directory for more complex examples including:
-- Todo List Application
+### Unidirectional Data Flow
 
-## License
+The framework uses a unidirectional data flow:
 
-MIT License - See LICENSE file for details
+1. **Predictability**: State changes flow in one direction, making it easier to track and debug.
+2. **Simplicity**: The model is simpler to understand than bidirectional data binding.
+3. **Performance**: Updates can be optimized when the framework knows exactly what changed.
+
+### Event Delegation
+
+Events are handled using a centralized approach:
+
+1. **Performance**: This reduces the number of event listeners attached to the DOM.
+2. **Consistency**: Event handling works the same way across all components.
+
+## Conclusion
+
+MiniDOM provides a powerful yet lightweight approach to building web interfaces. By understanding the core concepts of components, virtual DOM, and state management, you can build complex applications with maintainable code.
