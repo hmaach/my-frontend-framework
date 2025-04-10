@@ -85,7 +85,7 @@ const card = h('div', { class: 'card' }, [
 For simple text nodes, you can include strings in the children array:
 
 ```javascript
-const heading = h('h1', {}, ['Hello, World!']);
+const heading = h('h1', {}, [hString('Hello, World!')]);
 ```
 
 ### Fragments
@@ -668,12 +668,12 @@ The framework uses a unidirectional data flow:
 2. **Simplicity**: The model is simpler to understand than bidirectional data binding.
 3. **Performance**: Updates can be optimized when the framework knows exactly what changed.
 
-### Event Delegation
+### Event Handling
 
-Events are handled using a centralized approach:
+Events are handled using a declarative approach:
 
-1. **Performance**: This reduces the number of event listeners attached to the DOM.
-2. **Consistency**: Event handling works the same way across all components.
+1. **Simplicity**: Events are bound declaratively using the `on` property in virtual nodes.
+2. **Cleanup**: Event handlers are automatically cleaned up when components are unmounted.
 
 ## Conclusion
 

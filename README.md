@@ -38,4 +38,4 @@ Built-in router supports:
 
 ## Getting Started
 
-See the [examples.md](./docs/examples.md) for detailed code examples and usage patterns.
+See the [docs.md](./docs/docs.md) for detailed code examples and usage patterns.
